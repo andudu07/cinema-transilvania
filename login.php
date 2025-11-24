@@ -72,10 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       <button class="btn" type="submit">Autentificare</button>
     </form>
-
-    <div class="helper">
-      Utilizator implicit: <code>admin</code> / <code>admin123</code>
-    </div>
   </div>
 </body>
 </html>
