@@ -9,21 +9,29 @@ if (is_logged_in()) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
+    require_csrf();
+
+		$username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
     if ($username === '' || $password === '') {
         $error = 'Introduceți utilizatorul și parola.';
     } else {
-        $stmt = $pdo->prepare('SELECT id, username, password_hash FROM users WHERE username = ?');
+        $stmt = $pdo->prepare('SELECT id, username, password_hash, role FROM users WHERE username = ?');
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['password_hash'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            header('Location: movies.php');
-            exit;
+            $_SESSION['email'] = $user['email'];
+						$_SESSION['role'] = $user['role'] ?? 'buyer';
+            if ($_SESSION['role'] === 'buyer') {
+    					header('Location: index.php#program');
+						} else {
+    					header('Location: movies.php');
+						}
+						exit;
         } else {
             $error = 'Credențiale invalide.';
         }
@@ -55,13 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
   <div class="card">
     <h1>Cinema Transilvania</h1>
-    <p>Autentificare pentru panoul de administrare filme.</p>
 
     <?php if ($error): ?>
       <div class="error"><?= e($error) ?></div>
     <?php endif; ?>
 
     <form method="post" action="">
+			<?= csrf_field() ?>
+
       <div class="field">
         <label for="username">Utilizator</label>
         <input type="text" id="username" name="username" required />
@@ -72,6 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       <button class="btn" type="submit">Autentificare</button>
     </form>
+
+    <div class="helper">
+      Admin: <code>admin</code> / <code>admin123</code>
+    </div>
+		<div class="helper">
+      Buyer: <code>buyer1</code> / <code>parolamea123</code>
+    </div>
   </div>
 </body>
 </html>
