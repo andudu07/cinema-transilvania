@@ -1,7 +1,8 @@
 <?php
 require_once 'config.php';
 
-require_login();
+require_role(['admin', 'editor']);
+
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $editing = $id > 0;
@@ -34,17 +35,19 @@ if ($editing) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+		require_csrf();
+
     $title = trim($_POST['title'] ?? '');
     $duration = (int) ($_POST['duration'] ?? 0);
     $synopsis = trim($_POST['synopsis'] ?? '');
     $rating = trim($_POST['rating'] ?? '');
-    $image_url = trim($_POST['image_url'] ?? '');
+    $image_url = sanitize_image_url($_POST['image_url'] ?? '');
     $show_date = trim($_POST['show_date'] ?? '');
     $show_time = trim($_POST['show_time'] ?? '');
     $projection_format = $_POST['projection_format'] ?? '2D';
 
-    if ($title === '' || $duration <= 0 || $show_date === '' || $show_time === '') {
-        $error = 'Titlul, durata, data și ora sunt obligatorii.';
+    if ($title === '' || $duration <= 0 || !is_valid_date_ymd($show_date) || $show_time === '') {
+        $error = 'Titlul, durata, data și ora sunt obligatorii(format valid).';
     } else {
         $time_full = $show_time . ':00'; // HH:MM:SS
 
@@ -107,7 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="brand">Cinema Transilvania — Admin filme</div>
     <div class="spacer"></div>
     <div class="user">Conectat ca <strong><?= e($_SESSION['username']) ?></strong></div>
-    <div style="margin-left:16px"><a href="logout.php" class="btn btn-secondary">Logout</a></div>
+    <div style="margin-left:16px"><form method="post" action="logout.php" style="margin-left:16px">
+  <?= csrf_field() ?>
+  <button type="submit" class="btn btn-secondary">Logout</button>
+</form></div>
   </header>
   <main>
     <h1><?= $editing ? 'Editează film' : 'Adaugă film' ?></h1>
@@ -118,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form method="post" action="">
+			<?= csrf_field() ?>
       <div class="field">
         <label for="title">Titlu</label>
         <input type="text" id="title" name="title" required value="<?= e($title) ?>" />
