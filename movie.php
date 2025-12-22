@@ -153,4 +153,3 @@ if (!$movie) {
   </footer>
 </body>
 </html>
-
