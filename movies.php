@@ -1,17 +1,22 @@
 <?php
 require_once 'config.php';
-require_login();
+require_role(['admin', 'editor']);
 
-// Ștergere film
-if (isset($_GET['delete'])) {
-    $id = (int) $_GET['delete'];
+// stergere film
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    require_csrf();
+		require_role(['admin']); // doar admin poate sterge
+
+    $id = (int)$_POST['delete_id'];
     if ($id > 0) {
         $stmt = $pdo->prepare('DELETE FROM movies WHERE id = ?');
         $stmt->execute([$id]);
-        header('Location: movies.php');
-        exit;
     }
+
+    header('Location: movies.php');
+    exit;
 }
+
 
 // Listare filme
 $stmt = $pdo->query('SELECT id, title, duration_minutes, rating, image_url FROM movies ORDER BY id DESC');
@@ -52,7 +57,10 @@ $movies = $stmt->fetchAll();
     <div class="brand">Cinema Transilvania — Admin filme</div>
     <div class="spacer"></div>
     <div class="user">Conectat ca <strong><?= e($_SESSION['username']) ?></strong></div>
-    <div style="margin-left:16px"><a href="logout.php" class="btn btn-secondary">Logout</a></div>
+    <div style="margin-left:16px"><form method="post" action="logout.php" style="margin-left:16px">
+  <?= csrf_field() ?>
+  <button type="submit" class="btn btn-secondary">Logout</button>
+</form></div>
   </header>
   <main>
     <h1>Filme</h1>
@@ -93,8 +101,17 @@ $movies = $stmt->fetchAll();
               <td><?= e($movie['rating']) ?></td>
               <td class="actions">
                 <a href="movie_form.php?id=<?= (int)$movie['id'] ?>">Editează</a>
-                <a href="movies.php?delete=<?= (int)$movie['id'] ?>" onclick="return confirm('Sigur ștergeți acest film?');">Șterge</a>
-              </td>
+              	<?php if (current_role() === 'admin'): ?>
+  								<form method="post" action="movies.php" style="display:inline" onsubmit="return confirm('Sigur ștergeți acest film?');">
+										<?= csrf_field() ?>
+    								<input type="hidden" name="delete_id" value="<?= (int)$movie['id'] ?>">
+    								<button type="submit" style="background:none;border:none;color:#e5e7eb;cursor:pointer;padding:0;font-size:13px;text-decoration:underline;">
+      								Șterge
+    								</button>
+  								</form>
+								<?php endif; ?>
+
+							</td>
             </tr>
           <?php endforeach; ?>
         </tbody>
