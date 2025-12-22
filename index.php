@@ -1,7 +1,6 @@
 <?php
 require_once 'config.php';
 
-// data selectată din query string sau azi
 $selectedDate = $_GET['date'] ?? date('Y-m-d');
 
 // validare format data
@@ -11,7 +10,7 @@ if (!$dt || $dt->format('Y-m-d') !== $selectedDate) {
     $dt = new DateTime($selectedDate);
 }
 
-// filme pentru data selectată
+// filme pentru data selectata
 $stmt = $pdo->prepare('
     SELECT id, title, duration_minutes, synopsis, rating, image_url, show_time, projection_format
     FROM movies
@@ -287,7 +286,7 @@ function formatHour(?string $time): string {
     <nav>
       <a href="#program" class="active">Program</a>
       <a href="contact.php">Contact</a>
-      <a href="movies.php">Admin</a>
+      <a href="admin.php">Log in</a>
     </nav>
   </header>
 
