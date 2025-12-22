@@ -7,13 +7,76 @@ if ($id <= 0) {
     die('Film invalid.');
 }
 
-$stmt = $pdo->prepare('SELECT id, title, duration_minutes, rating FROM movies WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, title, duration_minutes, rating, show_date, show_time FROM movies WHERE id = ?');
 $stmt->execute([$id]);
 $movie = $stmt->fetch();
 
 if (!$movie) {
     die('Film inexistent.');
 }
+
+$success = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_login();
+    require_role(['buyer']);
+    require_csrf();
+
+    $qty = (int)($_POST['qty'] ?? 0);
+    $ticket_type = $_POST['ticket_type'] ?? 'normal';
+
+    $allowedTypes = ['normal', 'student'];
+    if ($qty < 1 || $qty > 10) {
+        $error = 'Cantitatea trebuie să fie între 1 și 10.';
+    } elseif (!in_array($ticket_type, $allowedTypes, true)) {
+        $error = 'Tip bilet invalid.';
+    } else {
+        $ticket_code = generate_ticket_code(16);
+
+        // Inserare ticket
+        $stmt = $pdo->prepare('
+            INSERT INTO tickets (ticket_code, user_id, movie_id, qty, ticket_type, status)
+            VALUES (?,?,?,?,?,?)
+        ');
+        $stmt->execute([
+            $ticket_code,
+            (int)$_SESSION['user_id'],
+            (int)$movie['id'],
+            $qty,
+            $ticket_type,
+            'paid'
+        ]);
+
+        $ticketId = (int)$pdo->lastInsertId();
+
+        // Email
+        $to = $_SESSION['email'] ?? '';
+        if ($to !== '') {
+            $ticket = [
+                'id' => $ticketId,
+                'ticket_code' => $ticket_code,
+                'qty' => $qty,
+                'ticket_type' => $ticket_type
+            ];
+
+            $movieForEmail = $movie;
+
+            $sent = send_ticket_email($to, $ticket, $movieForEmail);
+            if (!$sent) {
+                $success = 'Bilet emis. Email-ul nu a putut fi trimis (verifică SMTP/mail server). Cod: ' . e($ticket_code);
+            } else {
+                $success = 'Bilet emis și trimis pe email. Cod: ' . e($ticket_code);
+            }
+        } else {
+            $success = 'Bilet emis. Nu există email în cont. Cod: ' . e($ticket_code);
+        }
+
+    }
+}
+
+
+
 ?>
 <!doctype html>
 <html lang="ro">
@@ -145,23 +208,76 @@ if (!$movie) {
         <span class="pill">ID intern: <?= (int)$movie['id'] ?></span>
       </div>
 
-      <div class="notice">
-        Aceasta este doar o pagină de interfață pentru versiunea inițială a proiectului.
-        Fluxul real de cumpărare bilete (selectare dată/oră, locuri, plată) va fi implementat
-        într-o versiune ulterioară, după ce este finalizată partea de roluri și securitate.
-      </div>
+      <?php if ($error): ?>
+  			<div class="notice" style="border-color: rgba(248,113,113,0.6); color:#fecaca;">
+    			<?= e($error) ?>
+  			</div>
+			<?php endif; ?>
 
-      <p style="font-size:14px;margin-bottom:18px;">
-        Într-o versiune viitoare, aici vei putea alege:
-      </p>
+			<?php if ($success): ?>
+  			<div class="notice" style="border-color: rgba(34,197,94,0.6); color:#bbf7d0;">
+    			<?= $success ?>
+  			</div>
+			<?php endif; ?>
+			<?php if (!is_logged_in()): ?>
+				<div class="notice">
+					Pentru a cumpăra bilete trebuie să te autentifici ca <strong>buyer</strong>.
+				</div>
+				<div class="actions">
+					<a href="login.php" class="btn btn-primary">Autentificare</a>
+					<a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
+				</div>
 
-      <ul style="font-size:13px;color:var(--muted);margin-top:0;">
-        <li>data și ora proiecției,</li>
-        <li>numărul de bilete,</li>
-        <li>tipul de bilet (normal, student, etc.),</li>
-        <li>și vei confirma rezervarea / plata.</li>
-      </ul>
+			<?php elseif (current_role() !== 'buyer'): ?>
+				<div class="notice">
+					Contul tău nu are rol de cumpărător (rol curent: <strong><?= e(current_role()) ?></strong>).
+				</div>
+				<div class="actions">
+					<a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
+				</div>
 
+			<?php else: ?>
+				  <form method="post" action="">
+						<?= csrf_field() ?>
+
+						<div style="margin-bottom:12px;">
+							<label for="qty" style="display:block;margin-bottom:6px;font-size:13px;color:var(--muted);">
+								Număr bilete
+							</label>
+							<input
+								type="number"
+								id="qty"
+								name="qty"
+								min="1"
+								max="10"
+								value="1"
+								required
+								style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.4);background:#020617;color:#e5e7eb;font-size:14px;"
+							/>
+						</div>
+
+						<div style="margin-bottom:12px;">
+							<label for="ticket_type" style="display:block;margin-bottom:6px;font-size:13px;color:var(--muted);">
+								Tip bilet
+							</label>
+							<select
+								id="ticket_type"
+								name="ticket_type"
+								style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.4);background:#020617;color:#e5e7eb;font-size:14px;"
+							>
+								<option value="normal">Normal</option>
+								<option value="student">Student</option>
+							</select>
+						</div>
+
+						<div class="actions">
+							<button type="submit" class="btn btn-primary">Confirmă cumpărarea</button>
+							<a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
+						</div>
+					</form>
+				v<?php endif; ?>
+
+      
       <div class="actions">
         <a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
         <a href="movie.php?id=<?= (int)$movie['id'] ?>" class="btn btn-primary">Vezi detalii film</a>
