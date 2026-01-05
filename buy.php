@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  
       <div>
         <div class="brand-text-title">Cinema Transilvania</div>
-        <div class="brand-text-sub">Cumpără bilet (mock, v1)</div>
+        <div class="brand-text-sub">Cumpără bilet</div>
       </div>
     </div>
   </header>
@@ -205,7 +205,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if (!empty($movie['rating'])): ?>
           <span class="pill">Rating: <?= e($movie['rating']) ?></span>
         <?php endif; ?>
-        <span class="pill">ID intern: <?= (int)$movie['id'] ?></span>
       </div>
 
       <?php if ($error): ?>
@@ -225,17 +224,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				</div>
 				<div class="actions">
 					<a href="login.php" class="btn btn-primary">Autentificare</a>
-					<a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
 				</div>
 
 			<?php elseif (current_role() !== 'buyer'): ?>
 				<div class="notice">
 					Contul tău nu are rol de cumpărător (rol curent: <strong><?= e(current_role()) ?></strong>).
 				</div>
-				<div class="actions">
-					<a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
-				</div>
-
 			<?php else: ?>
 				  <form method="post" action="">
 						<?= csrf_field() ?>
@@ -272,10 +266,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 						<div class="actions">
 							<button type="submit" class="btn btn-primary">Confirmă cumpărarea</button>
-							<a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
 						</div>
 					</form>
-				v<?php endif; ?>
+				<?php endif; ?>
 
       
       <div class="actions">
@@ -284,10 +277,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </section>
   </main>
-
-  <footer>
-    Pagina de cumpărare bilet — doar UI demonstrativă în versiunea curentă.
-  </footer>
 </body>
 </html>
 

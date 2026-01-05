@@ -7,7 +7,7 @@ if ($id <= 0) {
     die('Film invalid.');
 }
 
-$stmt = $pdo->prepare('SELECT id, title, duration_minutes, synopsis, rating FROM movies WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, title, duration_minutes, synopsis, rating, genre, director, actors FROM movies WHERE id = ?');
 $stmt->execute([$id]);
 $movie = $stmt->fetch();
 
@@ -130,8 +130,22 @@ if (!$movie) {
         <?php if (!empty($movie['rating'])): ?>
           <span class="pill">Rating: <?= e($movie['rating']) ?></span>
         <?php endif; ?>
-        <span class="pill">ID intern: <?= (int)$movie['id'] ?></span>
       </div>
+
+			<?php if (!empty($movie['genre']) || !empty($movie['director']) || !empty($movie['actors'])): ?>
+				<div class="meta" style="margin-top:10px;">
+					<?php if (!empty($movie['genre'])): ?>
+						<div><strong>Gen:</strong> <?= e($movie['genre']) ?></div>
+					<?php endif; ?>
+					<?php if (!empty($movie['director'])): ?>
+						<div><strong>Regizor:</strong> <?= e($movie['director']) ?></div>
+					<?php endif; ?>
+					<?php if (!empty($movie['actors'])): ?>
+						<div><strong>Actori:</strong> <?= e($movie['actors']) ?></div>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
+
 
       <div class="synopsis">
         <?php if (!empty($movie['synopsis'])): ?>
@@ -143,13 +157,9 @@ if (!$movie) {
 
       <div class="actions">
         <a href="index.php#program" class="btn btn-secondary">← Înapoi la program</a>
-        <a href="movies.php?id=<?= (int)$movie['id'] ?>" class="btn btn-primary">Editează în admin</a>
       </div>
     </section>
   </main>
-
-  <footer>
-    Pagina de detaliu film — versiune demonstrativă (fără rezervare efectivă de bilete în această versiune).
-  </footer>
 </body>
 </html>
+

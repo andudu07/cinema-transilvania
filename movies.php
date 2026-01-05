@@ -64,12 +64,16 @@ $movies = $stmt->fetchAll();
   </header>
   <main>
     <h1>Filme</h1>
-    <p class="lead">CRUD simplu pentru tabela <code>movies</code>. Doar utilizatorii autentificați pot modifica lista.</p>
-
-    <div class="toolbar">
-      <div class="pill">Total filme: <?= count($movies) ?></div>
-      <a href="movie_form.php" class="btn">+ Adaugă film</a>
-    </div>
+		
+		<div class="toolbar">
+  		<div class="pill">Total filme: <?= count($movies) ?></div>
+  		<div style="display:flex; gap:10px;">
+    		<a href="dashboard.php" class="btn btn-secondary">Dashboard</a>
+				<a href="reports.php" class="btn btn-secondary">Rapoarte</a>
+    		<a href="movie_form.php" class="btn">+ Adaugă film</a>
+  		</div>
+		</div>
+ 
 
     <?php if (!$movies): ?>
       <p>Nu există încă filme în baza de date.</p>

@@ -1,6 +1,7 @@
 <?php
 require_once 'config.php';
 
+// data selectata din query string sau azi
 $selectedDate = $_GET['date'] ?? date('Y-m-d');
 
 // validare format data
@@ -221,20 +222,6 @@ function formatHour(?string $time): string {
       max-height:52px;
       overflow:hidden;
     }
-    .movie-footer{
-      margin-top:auto;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size:12px;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .movie-footer-buttons{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
     .badge-muted{
       padding:3px 7px;
       border-radius:999px;
@@ -253,6 +240,35 @@ function formatHour(?string $time): string {
     #program{
       scroll-margin-top: 90px;
     }
+		.movie-row{
+			display:flex;
+			gap:18px;
+			padding:14px 14px;
+			border-radius:12px;
+			background:rgba(10,18,36,0.96);
+			border:1px solid rgba(148,163,184,0.35);
+			align-items:stretch;
+
+			flex-wrap:wrap;
+		}
+
+		.movie-actions{
+			margin-left:auto;
+			display:flex;
+			flex-direction:column;
+			justify-content:flex-end;
+			gap:10px;
+			align-items:flex-end;
+			min-width:170px;
+			padding-bottom:6px;
+			margin-top:10px;
+		}
+
+		.movie-actions .btn{
+			width:170px;          
+			justify-content:center;
+		}
+
     footer{
       padding:18px 32px;
       color:var(--muted);
@@ -270,7 +286,19 @@ function formatHour(?string $time): string {
       .movie-row{flex-direction:row;}
       .movie-poster{flex:0 0 80px;}
       .movie-poster img,.poster-placeholder{max-width:80px;height:120px;}
-    }
+    	.movie-actions{
+ 		 		flex: 1 1 100%;
+  			flex-direction:row;
+  			justify-content:flex-end;
+  			align-items:center;
+  			min-width:0;
+  			margin-top:10px;
+			}
+
+			.movie-actions .btn{
+  			width:auto;
+			}
+		}
   </style>
 </head>
 <body>
@@ -343,19 +371,11 @@ function formatHour(?string $time): string {
                   Ora: <?= e(formatHour($movie['show_time'])) ?> ·
                   Format: <?= e($movie['projection_format']) ?>
                 </div>
-                <div class="movie-synopsis">
-                  <?php if (!empty($movie['synopsis'])): ?>
-                    <?= nl2br(e($movie['synopsis'])) ?>
-                  <?php else: ?>
-                    <span style="color:var(--muted);">Nu există încă sinopsis pentru acest titlu.</span>
-                  <?php endif; ?>
-                </div>
-                <div class="movie-footer">
-                  <div class="movie-footer-buttons">
-                    <a class="btn btn-primary" href="buy.php?id=<?= (int)$movie['id'] ?>">Cumpără bilet</a>
-                    <a class="btn btn-ghost" href="movie.php?id=<?= (int)$movie['id'] ?>">Detalii &amp; info</a>
-                  </div>
-                </div>
+               	<div class="movie-actions">
+									<a class="btn btn-primary" href="buy.php?id=<?= (int)$movie['id'] ?>">Cumpără bilet</a>
+  								<a class="btn btn-ghost" href="movie.php?id=<?= (int)$movie['id'] ?>">Detalii &amp; info</a>
+								</div>
+	 
               </div>
             </article>
           <?php endforeach; ?>

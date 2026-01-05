@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === '' || $password === '') {
         $error = 'Introduceți utilizatorul și parola.';
     } else {
-        $stmt = $pdo->prepare('SELECT id, username, password_hash, role FROM users WHERE username = ?');
+        $stmt = $pdo->prepare('SELECT id, username, email, password_hash, role FROM users WHERE username = ?');
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
@@ -80,7 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="password" id="password" name="password" required />
       </div>
       <button class="btn" type="submit">Autentificare</button>
-    </form>
+    	<div class="helper">
+  			Nu ai cont? <a href="register.php" style="color:#e5e7eb;text-decoration:underline;">Înregistrare</a>
+			</div>
+
+		</form>
 
     <div class="helper">
       Admin: <code>admin</code> / <code>admin123</code>

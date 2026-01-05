@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+require_once 'mailer.php';
 
 $success = '';
 $error = '';
@@ -88,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         } elseif ($score < 0.5) {
                             $error = 'Mesaj blocat (scor reCAPTCHA prea mic).';
                         } else {
-                            // ✅ SAVE to DB (prepared statement)
                             $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
                             $ua = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
 
@@ -105,6 +105,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     $ip,
                                     $ua
                                 ]);
+																
+																$contactId = (int)$pdo->lastInsertId();
+
+																// Email către admin
+																$adminSubject = "Mesaj contact #{$contactId} — " . $old['subject'];
+																$adminText =
+																"Mesaj nou din formularul de contact\n\n" .
+																"ID: {$contactId}\n" .
+																"Nume: {$old['name']}\n" .
+																"Email: {$old['email']}\n" .
+																"Subiect: {$old['subject']}\n" .
+																"IP: {$ip}\n" .
+																"User-Agent: {$ua}\n\n" .
+																"Mesaj:\n{$old['message']}\n";
+
+																$sentAdmin = send_email_smtp(ADMIN_EMAIL, $adminSubject, $adminText);
+
+																// Auto-reply către utilizator
+																$userSubject = "Am primit mesajul tău (ID #{$contactId}) — Cinema Transilvania";
+																$userText =
+																"Salut, {$old['name']}!\n\n" .
+																"Îți mulțumim! Am primit mesajul tău și revenim cât mai repede.\n\n" .
+																"ID mesaj: {$contactId}\n" .
+																"Subiect: {$old['subject']}\n\n" .
+																"— Cinema Transilvania";
+
+																$sentUser = send_email_smtp($old['email'], $userSubject, $userText);
+
+																// Nu bloca succesul dacă emailul eșuează
+																if (!$sentAdmin || !$sentUser) {
+																		error_log("Contact email not fully sent. admin={$sentAdmin} user={$sentUser} id={$contactId}");
+																}
+
 
                                 $success = 'Mesajul a fost trimis cu succes!';
                                 $old = ['name'=>'', 'email'=>'', 'subject'=>'', 'message'=>'']; // clear form
@@ -228,7 +261,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="field">
           <label for="message">Mesaj</label>
           <textarea id="message" name="message" required><?= e($old['message']) ?></textarea>
-          <div class="hint">Acest formular este protejat de reCAPTCHA (invizibil).</div>
         </div>
 
         <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response" value="">

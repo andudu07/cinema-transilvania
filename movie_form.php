@@ -16,7 +16,11 @@ $show_date = '';
 $show_time = '';
 $projection_format = '2D';
 $error = '';
+$genre = '';
+$director = '';
+$actors = '';
 
+        
 if ($editing) {
     $stmt = $pdo->prepare('SELECT * FROM movies WHERE id = ?');
     $stmt->execute([$id]);
@@ -32,6 +36,9 @@ if ($editing) {
     $show_date = $movie['show_date'] ?? '';
     $show_time = substr($movie['show_time'] ?? '', 0, 5); // HH:MM
     $projection_format = $movie['projection_format'] ?? '2D';
+		$genre = $movie['genre'] ?? '';
+		$director = $movie['director'] ?? '';
+		$actors = $movie['actors'] ?? '';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,7 +48,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $duration = (int) ($_POST['duration'] ?? 0);
     $synopsis = trim($_POST['synopsis'] ?? '');
     $rating = trim($_POST['rating'] ?? '');
-    $image_url = sanitize_image_url($_POST['image_url'] ?? '');
+    $genre = trim($_POST['genre'] ?? '');
+		$director = trim($_POST['director'] ?? '');
+		$actors = trim($_POST['actors'] ?? '');
+
+		if (mb_strlen($genre) > 120) $genre = mb_substr($genre, 0, 120);
+		if (mb_strlen($director) > 120) $director = mb_substr($director, 0, 120);
+		if (mb_strlen($actors) > 255) $actors = mb_substr($actors, 0, 255);
+
+		$image_url = sanitize_image_url($_POST['image_url'] ?? '');
     $show_date = trim($_POST['show_date'] ?? '');
     $show_time = trim($_POST['show_time'] ?? '');
     $projection_format = $_POST['projection_format'] ?? '2D';
@@ -54,16 +69,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($editing) {
             $stmt = $pdo->prepare('
                 UPDATE movies
-                SET title = ?, duration_minutes = ?, synopsis = ?, rating = ?, image_url = ?, show_date = ?, show_time = ?, projection_format = ?
+                SET title = ?, duration_minutes = ?, synopsis = ?, rating = ?, genre = ?, director = ?, actors = ?, image_url = ?, show_date = ?, show_time = ?, projection_format = ?
                 WHERE id = ?
             ');
-            $stmt->execute([$title, $duration, $synopsis, $rating, $image_url, $show_date, $time_full, $projection_format, $id]);
+            $stmt->execute([$title, $duration, $synopsis, $rating, $genre, $director, $actors, $image_url, $show_date, $time_full, $projection_format, $id]);
         } else {
             $stmt = $pdo->prepare('
-                INSERT INTO movies (title, duration_minutes, synopsis, rating, image_url, show_date, show_time, projection_format)
-                VALUES (?,?,?,?,?,?,?,?)
+                INSERT INTO movies (title, duration_minutes, synopsis, rating, genre, director, actors, image_url, show_date, show_time, projection_format)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)
             ');
-            $stmt->execute([$title, $duration, $synopsis, $rating, $image_url, $show_date, $time_full, $projection_format]);
+            $stmt->execute([$title, $duration, $synopsis, $rating, $genre, $director, $actors, $image_url, $show_date, $time_full, $projection_format]);
         }
         header('Location: movies.php');
         exit;
@@ -125,6 +140,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <form method="post" action="">
 			<?= csrf_field() ?>
+			<div class="field" style="border:1px dashed rgba(148,163,184,0.5); padding:12px; border-radius:12px; margin-bottom:14px;">
+				<label style="margin-bottom:8px;">Completează automat din OMDb</label>
+
+				<div class="row-2">
+					<div class="field" style="margin-bottom:0;">
+						<label for="lookup_title">Titlu pentru căutare</label>
+						<input type="text" id="lookup_title" value="<?= e($title) ?>" placeholder="ex: Inception" />
+					</div>
+					<div class="field" style="margin-bottom:0;">
+						<label for="lookup_year">An (opțional)</label>
+						<input type="number" id="lookup_year" placeholder="2010" min="1900" max="2100" />
+					</div>
+				</div>
+
+				<div class="actions" style="margin-top:10px;">
+					<button type="button" class="btn btn-secondary" id="btn-autofill">Completează automat</button>
+					<div id="autofill-status" style="font-size:13px;color:#9ca3af;align-self:center;"></div>
+				</div>
+			</div>
+
       <div class="field">
         <label for="title">Titlu</label>
         <input type="text" id="title" name="title" required value="<?= e($title) ?>" />
@@ -140,6 +175,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <input type="text" id="rating" name="rating" value="<?= e($rating) ?>" />
         </div>
       </div>
+			<div class="row-2">
+				<div class="field">
+					<label for="genre">Gen</label>
+					<input type="text" id="genre" name="genre" value="<?= e($genre) ?>" placeholder="ex: Action, Sci-Fi" />
+				</div>
+				<div class="field">
+					<label for="director">Regizor</label>
+					<input type="text" id="director" name="director" value="<?= e($director) ?>" placeholder="ex: Christopher Nolan" />
+				</div>
+			</div>
+
+			<div class="field">
+				<label for="actors">Actori</label>
+				<input type="text" id="actors" name="actors" value="<?= e($actors) ?>" placeholder="ex: Actor 1, Actor 2, Actor 3" />
+			</div>
 
       <div class="field">
         <label for="image_url">URL imagine / poster</label>
@@ -179,6 +229,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </form>
   </main>
+	<script>
+		const btn = document.getElementById('btn-autofill');
+		const statusEl = document.getElementById('autofill-status');
+
+		btn.addEventListener('click', async () => {
+			const title = document.getElementById('lookup_title').value.trim();
+			const year = document.getElementById('lookup_year').value.trim();
+
+			if (!title) {
+				statusEl.textContent = 'Introdu un titlu.';
+				return;
+			}
+
+			btn.disabled = true;
+			statusEl.textContent = 'Caut...';
+
+			try {
+				const formData = new FormData();
+				formData.append('title', title);
+				if (year) formData.append('year', year);
+
+				formData.append('csrf', '<?= e(csrf_token()) ?>');
+
+				const resp = await fetch('movie_autofill.php', {
+					method: 'POST',
+					body: formData
+				});
+
+				const data = await resp.json();
+
+				if (!data.ok) {
+					statusEl.textContent = data.error || 'Eroare autofill.';
+					return;
+				}
+
+				const m = data.movie;
+
+				// Umple campurile existente din formular:
+				if (m.title) document.getElementById('title').value = m.title;
+				if (m.duration_minutes) document.getElementById('duration').value = m.duration_minutes;
+				if (m.synopsis) document.getElementById('synopsis').value = m.synopsis;
+				if (m.rating) document.getElementById('rating').value = m.rating;
+				if (m.image_url) document.getElementById('image_url').value = m.image_url;
+				if (m.genre) document.getElementById('genre').value = m.genre;
+				if (m.director) document.getElementById('director').value = m.director;
+				if (m.actors) document.getElementById('actors').value = m.actors;
+
+				statusEl.textContent = 'Completat. Verifică și salvează.';
+			} catch (e) {
+				statusEl.textContent = 'Eroare rețea / server.';
+			} finally {
+				btn.disabled = false;
+			}
+		});
+	</script>
+
 </body>
 </html>
 
