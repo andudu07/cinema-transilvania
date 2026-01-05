@@ -11,6 +11,8 @@ if (!$dt || $dt->format('Y-m-d') !== $selectedDate) {
     $dt = new DateTime($selectedDate);
 }
 
+$_SESSION['last_program_date'] = $selectedDate;
+
 // filme pentru data selectata
 $stmt = $pdo->prepare('
     SELECT id, title, duration_minutes, synopsis, rating, image_url, show_time, projection_format
@@ -313,7 +315,7 @@ function formatHour(?string $time): string {
     </div>
     <nav>
       <a href="#program" class="active">Program</a>
-      <a href="contact.php">Contact</a>
+      <a href="contact.php?date=<?= e($selectedDate) ?>">Contact</a>
       <a href="admin.php">Log in</a>
     </nav>
   </header>
@@ -372,8 +374,8 @@ function formatHour(?string $time): string {
                   Format: <?= e($movie['projection_format']) ?>
                 </div>
                	<div class="movie-actions">
-									<a class="btn btn-primary" href="buy.php?id=<?= (int)$movie['id'] ?>">Cumpără bilet</a>
-  								<a class="btn btn-ghost" href="movie.php?id=<?= (int)$movie['id'] ?>">Detalii &amp; info</a>
+									<a class="btn btn-primary" href="buy.php?id=<?= (int)$movie['id'] ?>&date=<?= e($selectedDate) ?>">Cumpără bilet</a>
+  								<a class="btn btn-ghost" href="movie.php?id=<?= (int)$movie['id'] ?>&date=<?= e($selectedDate) ?>">Detalii &amp; info</a>
 								</div>
 	 
               </div>

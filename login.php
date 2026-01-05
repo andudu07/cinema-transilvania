@@ -85,13 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			</div>
 
 		</form>
-
-    <div class="helper">
-      Admin: <code>admin</code> / <code>admin123</code>
-    </div>
-		<div class="helper">
-      Buyer: <code>buyer1</code> / <code>parolamea123</code>
-    </div>
   </div>
 </body>
 </html>

@@ -2,6 +2,9 @@
 require_once 'config.php';
 require_once 'mailer.php';
 
+$backDate = $_GET['date'] ?? null;
+$programBack = program_url(is_string($backDate) ? $backDate : null);
+
 $success = '';
 $error = '';
 $old = ['name'=>'', 'email'=>'', 'subject'=>'', 'message'=>''];
@@ -216,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
     <nav>
-      <a href="index.php#program">Program</a>
+      <a href="<?= e($programBack) ?>">Program</a>
       <a href="contact.php" class="active">Contact</a>
       <a href="admin.php">Log in</a>
     </nav>
@@ -267,8 +270,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="actions">
           <button type="submit" class="btn btn-primary" id="btn-submit">Trimite mesaj</button>
-          <a href="index.php#program" class="btn btn-secondary">← Înapoi la program</a>
-        </div>
+        	<a href="<?= e($programBack) ?>" class="btn btn-secondary">← Înapoi la program</a>
+				</div>
 
         <noscript>
           <div class="notice error">
@@ -281,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <footer>
     <div>© <?= date('Y') ?> Cinema Transilvania — Contact.</div>
-    <div><a href="index.php#program" style="color:inherit;text-decoration:none;">← Înapoi la program</a></div>
+    <div><a href="<?= e($programBack) ?>" style="color:inherit;text-decoration:none;">← Înapoi la program</a></div>
   </footer>
 
   <script>

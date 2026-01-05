@@ -6,12 +6,7 @@ $db   = 'cinema_transilvania';
 $user = 'root';
 $pass = 'root'; 
 
-/*
-$host = 'sql109.infinityfree.com';
-$db   = 'if0_40489356_cinematransilvania';
-$user = 'if0_40489356';
-$pass = 'fX1z0BoIM7r8';
-*/
+
 
 $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
 $options = [
@@ -28,10 +23,10 @@ try {
 }
 
 // reCAPTCHA v3
-define('RECAPTCHA_SITE_KEY', '6LfezjMsAAAAABWNH5RHmmn9EGNERPaxRgmL9SdK');
-define('RECAPTCHA_SECRET_KEY', '6LfezjMsAAAAAN5MFL5nsZssYTsZ_ZkLKkD8qItm');
+define('RECAPTCHA_SITE_KEY', SITE_KEY);
+define('RECAPTCHA_SECRET_KEY', SECRET_KEY);
 
-define('OMDB_API_KEY', '8e27dcc6');
+define('OMDB_API_KEY', API_KEY);
 define('OMDB_BASE_URL', 'https://www.omdbapi.com/');
 
 // Email / SMTP
@@ -39,7 +34,7 @@ define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587);
 define('SMTP_SECURE', 'tls'); // tls / ssl
 define('SMTP_USER', 'cinematransilvania@gmail.com');
-define('SMTP_PASS', 'vwut ytvw rqmj qqdh');
+define('SMTP_PASS', SMTP_PASS);
 define('MAIL_FROM', SMTP_USER);
 define('MAIL_FROM_NAME', 'Cinema Transilvania');
 
@@ -137,6 +132,13 @@ function sanitize_image_url(string $url): string {
 function is_valid_date_ymd(string $s): bool {
     $dt = DateTime::createFromFormat('Y-m-d', $s);
     return $dt && $dt->format('Y-m-d') === $s;
+}
+
+function program_url(?string $date = null): string {
+    if (is_string($date) && $date !== '' && is_valid_date_ymd($date)) {
+        return 'index.php?date=' . urlencode($date) . '#program';
+    }
+    return 'index.php#program';
 }
 
 function is_valid_time_hm(string $s): bool {

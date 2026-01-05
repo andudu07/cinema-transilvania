@@ -7,6 +7,9 @@ if ($id <= 0) {
     die('Film invalid.');
 }
 
+$backDate = $_GET['date'] ?? ($_SESSION['last_program_date'] ?? null);
+$programBack = program_url(is_string($backDate) ? $backDate : null);
+
 $stmt = $pdo->prepare('SELECT id, title, duration_minutes, rating, show_date, show_time FROM movies WHERE id = ?');
 $stmt->execute([$id]);
 $movie = $stmt->fetch();
@@ -272,8 +275,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       
       <div class="actions">
-        <a href="index.php#program" class="btn btn-secondary">← Înapoi la listă</a>
-        <a href="movie.php?id=<?= (int)$movie['id'] ?>" class="btn btn-primary">Vezi detalii film</a>
+				<a href="<?= e($programBack) ?>" class="btn btn-secondary">← Înapoi la listă</a>
+				<a href="movie.php?id=<?= (int)$movie['id'] ?>&date=<?= e($backDate ?? '') ?>" class="btn btn-primary">Vezi detalii film</a>
       </div>
     </section>
   </main>
